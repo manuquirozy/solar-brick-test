@@ -1,10 +1,8 @@
 #include <Arduino.h>
-//Program to check the WCS1800 current sensor without smoothing
-//without FSM
-//BUT with the shift_curve variable
 //Works 20th of NOV
 //update 26th of NOV
 //works! still on 27th of NOV
+//include a new resistor
 
 //pin definiton
 #define input_pin_cur A3                                          //analog input pin for the current sensor connected to Analog input signal pin number 3
