@@ -10,7 +10,7 @@
 #define input_pin_vol_plus A0                             //Defining the analog pin number 5 to be for the plus cable of the attached source
 #define input_pin_vol_minus A1                            //Defining the analog pin number 5 to be for the minus cable of the attached source
 #define input_pin_cur A3                                  //analog input pin for the current sensor
-#define output_control 7                                  //the output control decides whether the circuit is open or close
+#define output_control 6                                  //the output control decides whether the circuit is open or close
 
 // FSM machines definition
 #define CIRCUITOPENED 1                                   //FSM State 1, when the circuit is opened
@@ -36,7 +36,7 @@ float vol_minus_fin;                                      //Stores the analog si
 float difference_fin;
 float ResolucionArduino = 1023;
 float MaxCorrienteSensor = 35; // WCS1800 Hall effect Current Sensor
-float BitCeroV = 523.5; // 503.951 (AWS1800)
+float BitCeroV = 522; // 503.951 (AWS1800)
 float I = 0;
 float V = 0;
 
@@ -55,7 +55,7 @@ unsigned long TS  = 5000;                                 //timing variable for 
 
 //Definition of printing command
 void printValues() {                                                          //begin of the print function declaration
-  Serial.println("ANA: " + String(cur_analog, 3) + "   (A): " + String(I, 3) + "\n");
+  Serial.println("(C): " + String(I, 3) + "\n");
   Serial.println("V:    " + String(V, 3) + "\n");
 }
 
@@ -119,7 +119,7 @@ void loop() { //begin of void loop
 //      delay(10000);
       trel = tact - tini;
       if (trel >= tsam) {
-        Serial.println("\nCC\n");
+        Serial.println("\nCorto\n");
         I = get_corriente(200);
         V = get_voltaje (200);
 
@@ -148,9 +148,10 @@ void loop() { //begin of void loop
           Serial.println("error printing to data file");                                                              //print an error line to the debug screen
         }
       }
-      if (trel >= TS) {                                                                                                  //begin of if clause, for the transition questions
+      if (trel <= TS) {                                                                                                  //begin of if clause, for the transition questions
         state = CIRCUITOPENED;                                                                                            //switch to state CIRCUITOPENED when the if-statement is fulfilled
         tini  = millis();                                                                                                 //refresh the intial timing
+        delay(2000);
       }                                                                                                                  //end of if clause, for the transition questions
       break;
 
@@ -160,7 +161,7 @@ void loop() { //begin of void loop
 //      delay(10000);
       trel = tact - tini;
       if (trel >= tsam) {
-        Serial.println("\nNCC\n");
+        Serial.println("\nNo Corto\n");
         I = get_corriente(200);
         V = get_voltaje (200);
 
@@ -189,9 +190,10 @@ void loop() { //begin of void loop
           Serial.println("error printing to data file");                                                              //print an error line to the debug screen
         }
       }
-      if (trel >= TS) {                                                                                                  //begin of if clause, for the transition questions
+      if (trel <= TS) {                                                                                                  //begin of if clause, for the transition questions
         state = CIRCUITCLOSED;                                                                                            //switch to state CIRCUITOPENED when the if-statement is fulfilled
         tini  = millis();                                                                                                 //refresh the intial timing
+        delay(2000);
       }                                                                                                                  //end of if clause, for the transition questions
       break;
   }
@@ -204,7 +206,7 @@ float get_corriente(int n_muestras)
   for (int i = 0; i < n_muestras; i++)
   {
     cur_analog = analogRead(input_pin_cur);
-    corriente = corriente + ((cur_analog * 0.00489 - BitCeroV * 0.00489) / 0.07214) ; //Ecuación  para obtener la corriente 0.07214 (AWS1800) 0.13957 (ACS711
+    corriente = corriente + ((cur_analog * 0.00489 - BitCeroV * 0.00489) / 0.727554) ; //Ecuación  para obtener la corriente 0.07214 (AWS1800) 0.13957 (ACS711
   }
   corriente = corriente / n_muestras;
   return (corriente);
