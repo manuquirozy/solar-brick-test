@@ -118,10 +118,13 @@ void setup() { //begin of void set up
     {
       NombreArchivo = "datalog3.txt";
     }
-
-    if (j != 4) {
-      //    NombreArchivo = String("datalog_") + String(j) +  String(".txt");
-      dataFile = SD.open(NombreArchivo, FILE_WRITE);                                                              //opens or intializies the file, dependent if that file already exits or not
+    else if (j == 4)
+    {
+      NombreArchivo = "Sensores.txt";
+    }
+    Serial.print("Es j"); Serial.println(j);
+    if (j < 4) {
+      dataFile = SD.open(NombreArchivo, FILE_WRITE);
       if (dataFile) {
         //      Serial.print("Escribiendo SD: ");
         dataFile.print("Estatus" );
@@ -135,38 +138,37 @@ void setup() { //begin of void set up
         dataFile.println("Fecha:" );  //
         dataFile.close();
       }
-      else {
-        Serial.println("Error al abrir el archivo");
-      }
     }
-    else if (j == 4) {
+      else if (j == 4) {
 
-      NombreArchivo = "SensoresExternos.txt";
-      dataFile = SD.open(NombreArchivo, FILE_WRITE);                                                              //opens or intializies the file, dependent if that file already exits or not
-      if (dataFile) {
-        dataFile.println("Irradiacia" );
-        dataFile.close();
+        NombreArchivo = "Sensores.txt";
+        dataFile = SD.open(NombreArchivo, FILE_WRITE);
+        Serial.println(dataFile);
+        if (dataFile) {
+          dataFile.println("Irradiancia" );
+          dataFile.close();
+        }
+        else {
+          Serial.println("Error al abrir irradiancia");
+        }
       }
-      else {
-        Serial.println("Error al abrir el archivo");
-      }
-    }
-
   }
 
 } //end of void setup
 
 void loop() { //begin of void loop
-  NombreArchivo = "SensoresExternos.txt";
+  delay(1000);
+  NombreArchivo = "Sensores.txt";
   dataFile = SD.open(NombreArchivo, FILE_WRITE);
   if (dataFile) {
-    Irradiancia = analogRead(A5) * 0.00489;
+    Irradiancia = analogRead(A1) * 0.00489;
+    Serial.print("Irradiancia: ");
     Serial.println(Irradiancia);
     dataFile.println(Irradiancia);
     dataFile.close();
   }
   else {
-    Serial.println("Error al abrir el archivo");
+    Serial.println("Irradiancia Error");
   }
 
   ///////////////// Estrutura FOR para que se comunte a cada LS, usando un multiplexor CD4052////////////////////
