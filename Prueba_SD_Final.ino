@@ -43,6 +43,11 @@ const int chipSelect = 10;                                //Chip Select pin is t
 // current state variable declaration
 unsigned int state = CIRCUITOPENED;
 
+//Timing vars
+unsigned long tini = 0;                                   //introducing a variable for the intial time
+unsigned long tact = 0;                                   //introducing a variable for the actual time
+unsigned long tres  = 0;
+
 unsigned long Contador = 0;
 
 //Definition of printing command
@@ -54,12 +59,13 @@ void printValues() {                                                          //
 void setup() { //begin of void set up
   Serial.begin(9600); //begin serial communication with the computer here (via USB)
 
-  for (int i = 8 ; i < 13 ; i++) // Para establecer los pines del 8-11 como salidas, ahí están A,B, X, Y (Selectores y salidas comunes del multiplexor CD4052)
+  for (int i = 2 ; i < 13 ; i++) // Para establecer los pines del 8-11 como salidas, ahí están A,B, X, Y (Selectores y salidas comunes del multiplexor CD4052)
     pinMode(i , OUTPUT);
+
   for (int j = 0 ; j < 4 ; j++)
   {
     k = j; // Selecciona la puerta a pasar en el multiplexor CD4052
-    A = k & B00000001 ;  digitalWrite ( 10 , A) ; //Solo quiero el ultimo bit para el selector A
+    A = k & B00000001 ;  digitalWrite ( 5 , A) ; //Solo quiero el ultimo bit para el selector A
     B = ( k >> 1 ) & B00000001 ; digitalWrite ( 4 , B) ; //Solo quiero el ultimo bit para el selector B
     analogWrite(8, 1023); // X, Salidas común // Desconecte los relés
     analogWrite(9, 1023); // Y, Salida
@@ -86,7 +92,7 @@ void setup() { //begin of void set up
   digitalWrite(output_control, LOW);
 
 
-  float CalibradoC = CalibradoCorriente(10000, 5); //obtenemos voltaje del sensor(10000 muestras)
+  float CalibradoC = CalibradoCorriente(10000, 3); //obtenemos voltaje del sensor(10000 muestras)
   Serial.print("Bits_i para sensor: ");
   Serial.println(CalibradoC , 3);
 
@@ -143,15 +149,28 @@ void setup() { //begin of void set up
 void loop() { //begin of void loop
 
   ///////////////// Estrutura FOR para que se comunte a cada LS, usando un multiplexor CD4052////////////////////
+
   for (int j = 0 ; j < 4 ; j++)
   {
-    Serial.print("Para igual a "); Serial.println(j);
+    //    Serial.println("valor de j0 "); Serial.println(j);
+    //    for (int j = 0 ; j < 4 ; j++)
+    //    {
+    //      k = j; // Selecciona la puerta a pasar en el multiplexor CD4052
+    //      A = k & B00000001 ;  digitalWrite ( 10 , A) ; //Solo quiero el ultimo bit para el selector A
+    //      B = ( k >> 1 ) & B00000001 ; digitalWrite ( 4 , B) ; //Solo quiero el ultimo bit para el selector B
+    //      analogWrite(8, 1023); // X, Salidas común // Desconecte los relés
+    //      analogWrite(9, 1023); // Y, Salida
+    //    }
+
     k = j; // Selecciona la puerta a pasar en el multiplexor CD4052
-    A = k & B00000001 ;  digitalWrite ( 10 , A) ; //Solo quiero el ultimo bit para el selector A
+    A = k & B00000001 ;  digitalWrite ( 5 , A) ; //Solo quiero el ultimo bit para el selector A
     B = ( k >> 1 ) & B00000001 ; digitalWrite ( 4 , B) ; //Solo quiero el ultimo bit para el selector B
     analogWrite(8, 0); // X, Salidas común
     analogWrite(9, 0); // Y, Salida común
 
+
+    digitalWrite(output_control, LOW);
+    delay(1000);
     // Cuando el relé está a 5V se deconectan (inicialmemnte en comunmente abierto), con 0V se conectan y el led rojo se activa
 
     /////////////////////// Defino el nombre del archivo ///////////////////////////
@@ -174,22 +193,15 @@ void loop() { //begin of void loop
     }
     //////////////////////////////////// NO CORTO///////////////////////////////////
 
-    delay(1000);
-    digitalWrite(output_control, LOW);
-    delay(500);
-
     Serial.println("\nNo Corto\n");
     I = get_corriente(200);
     V = get_voltaje (200);
 
+
     printValues();
     DateTime now = RTC.now();
-    delay(200);
-    Serial.println(String(now.hour(), DEC) + ":" + String(now.minute(), DEC) + ":" + String(now.second(), DEC) + "  ");
-    Serial.println(String(now.year(), DEC) + "/" + String(now.month(), DEC)  + "/" + String(now.day(), DEC));
     dataFile = SD.open(NombreArchivo, FILE_WRITE);
     if (dataFile) {
-      //      Serial.print("Escribiendo SD: ");
       DateTime now = RTC.now();
       dataFile.print("NCC"); // No Corto Circuito
       dataFile.print("\t");
@@ -206,29 +218,25 @@ void loop() { //begin of void loop
       Serial.println("Error al abrir el archivo");
     }
 
-    //////////////////////////////////// CORTO ////////////////////////////////////
-    //    k = j; // Selecciona la puerta a pasar en el multiplexor CD4052
-    //    A = k & B00000001 ;  digitalWrite ( 10 , A) ; //Solo quiero el ultimo bit para el selector A
-    //    B = ( k >> 1 ) & B00000001 ; digitalWrite ( 4 , B) ; //Solo quiero el ultimo bit para el selector B
-    //    analogWrite(8, 0); // X, Salidas común
-    //    analogWrite(9, 0); // Y, Salida común
-
     delay(1000);
+    //    //////////////////////////////////// CORTO ////////////////////////////////////
+    k = j; // Selecciona la puerta a pasar en el multiplexor CD4052
+    A = k & B00000001 ;  digitalWrite ( 5 , A) ; //Solo quiero el ultimo bit para el selector A
+    B = ( k >> 1 ) & B00000001 ; digitalWrite ( 4 , B) ; //Solo quiero el ultimo bit para el selector B
+    analogWrite(8, 0); // X, Salidas común
+    analogWrite(9, 0); // Y, Salida común
+
     digitalWrite(output_control, HIGH);
-    delay(500);
+    delay(1000);
 
     Serial.println("\nCorto\n");
     I = get_corriente(200);
     V = get_voltaje (200);
 
     printValues();
-    //DateTime now = RTC.now();
-    delay(200);
-    Serial.println(String(now.hour(), DEC) + ":" + String(now.minute(), DEC) + ":" + String(now.second(), DEC) + "  ");
-    Serial.println(String(now.year(), DEC) + "/" + String(now.month(), DEC)  + "/" + String(now.day(), DEC));
+
     dataFile = SD.open(NombreArchivo, FILE_WRITE);
     if (dataFile) {
-      //      Serial.print("Escribiendo SD: ");
       DateTime now = RTC.now();
       dataFile.print("CC"); // Corto Circuito
       dataFile.print("\t");
@@ -245,41 +253,38 @@ void loop() { //begin of void loop
       Serial.println("Error al abrir el archivo");
     }
 
-    digitalWrite(output_control, LOW);
-    delay(1000);
-    k = j; // Selecciona la puerta a pasar en el multiplexor CD4052
-    A = k & B00000001 ;  digitalWrite ( 10 , A) ; //Solo quiero el ultimo bit para el selector A
-    B = ( k >> 1 ) & B00000001 ; digitalWrite ( 4 , B) ; //Solo quiero el ultimo bit para el selector B
-    analogWrite(8, 1023); // X, Salidas común
-    analogWrite(9, 1023); // Y, Salida común
-
     // Que el muestreo esté determinado por un N segundos
-    //  tini =  millis();
-    //  while (1)
-    //  {
-    //    tact =  millis();
-    //    tres = tact - tini; // tres es la direferencia de tiempo entre lo que ha transcurrido y un actual (0?)
-    //    if (tres >= 10000) // Muestreo de 5min
-    //    {
-    //      break;
-    //    }
-    //  }
+    tini =  millis();
+    while (1)
+    {
+      tact =  millis();
+      tres = tact - tini; // tres es la direferencia de tiempo entre lo que ha transcurrido y un actual (0?)
+      if (tres >= 1000) // Muestreo de 5min
+      {
+        break;
+      }
+    }
 
+    digitalWrite(output_control, LOW);
+    k = j; // Selecciona la puerta a pasar en el multiplexor CD4052
+    A = k & B00000001 ;  digitalWrite ( 5 , A) ; //Solo quiero el ultimo bit para el selector A
+    B = ( k >> 1 ) & B00000001 ; digitalWrite ( 4 , B) ; //Solo quiero el ultimo bit para el selector B
+    analogWrite(8, 1023); // X, Salidas común // Desconecte los relés
+    analogWrite(9, 1023); // Y, Salida
 
     if (j == 3) { // Si llega al último ladrillo, que entre en modo bajo consumo
       Serial.println("Entramos a MBC");
-      digitalWrite(output_control, LOW);
       break;
     }
+
   }
 
-  delay(100);
   ////////////////7 A fuera del FOR que pasa midiendo por cada ladrillo V e I //////////////////
-  for (int i = 0 ;  i  <  0.5 * 15 ; i++) // Ese 0.2 minutos *15 (60/4) iteraciones
+  for (int i = 0 ;  i  <  5 * 15 ; i++) // Ese 0.2 minutos *15 (60/4) iteraciones
   {
     LowPower.powerDown(SLEEP_4S, ADC_OFF, BOD_OFF); // Se duerme el Arduino por 5 minutos
   }
-  delay(500);
+  delay(1000);
 }
 
 float get_corriente(int n_muestras)
